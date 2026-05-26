@@ -1,100 +1,139 @@
 # 🤖 Command Voice Robot
 
-Contrôle vocal d'un robot dans un environnement de grille 2D (Gymnasium + Pygame), avec reconnaissance vocale locale via **Whisper** et un **agent IA** capable de collecter des objets de manière autonome.
+Jeu de contrôle vocal d'un robot sur une grille — architecture **client / serveur** :
+
+- 🐍 **Backend Python** (FastAPI + WebSocket) : logique du jeu + reconnaissance vocale Whisper
+- ⚛️ **Frontend TypeScript** (React + Vite + Pixi.js) : rendu pixel art rétro 16-bit dans le navigateur
 
 ## ✨ Fonctionnalités
 
-- 🎤 **Reconnaissance vocale en français** (Whisper, local, sans clé API)
-- 🕹️ **Contrôle manuel** du robot à la voix ou au clavier
-- 🤖 **Agent IA autonome** : demande au robot d'aller chercher des objets ("récupère les clés", "ramasse 3 gemmes")
-- 💡 **Indices vocaux** : aide l'agent en lui donnant des repères ("près de la fontaine")
-- 🎨 **Interface Pygame** avec HUD, animations et écran d'activation du micro
-- 🔍 **Matching flou** des commandes : tolère les variations et erreurs de reconnaissance
+- 🎤 Reconnaissance vocale en français (Whisper local, sans clé API)
+- 🤖 Agent IA autonome : exploration avec champ de vision limité + pathfinding BFS
+- 💡 Indices vocaux pour guider l'agent ("près de la fontaine")
+- 🎨 Rendu pixel art animé avec halos, particules au ramassage, fog of war
+- 🌐 Interface web responsive (HUD overlay, panneaux latéraux)
+- ⌨️ Contrôle clavier en alternative à la voix
 
 ## 🗣️ Commandes vocales
 
 | Commande | Action |
 |----------|--------|
-| `avance`, `avancer`, `forward` | Le robot avance |
-| `gauche`, `à gauche`, `left` | Tourne à gauche |
-| `droite`, `à droite`, `right` | Tourne à droite |
-| `ramasse`, `attrape`, `prends` | Attrape un objet proche |
+| `avance`, `forward` | Le robot avance |
+| `gauche`, `droite` | Tourner |
+| `ramasse`, `attrape` | Attraper un objet proche |
 | `cherche les clés`, `récupère 3 gemmes` | Lance l'agent IA |
-| `près de la fontaine` | Donne un indice à l'agent |
-| `stop`, `quitter`, `exit` | Quitter |
+| `près de la fontaine` | Indice à l'agent |
+| `stop`, `quitter` | Reset |
 
-### Objets reconnus par l'agent IA
-`clé`, `gemme`, `étoile`, `pièce`, `batterie` — ou `tout` pour collecter l'ensemble.
-
-### Repères pour les indices
-`fontaine`, `statue`, `banc`, `lampadaire`, `panneau`.
+Objets : `clé`, `gemme`, `étoile`, `pièce`, `batterie` (ou `tout`)
+Repères : `fontaine`, `statue`, `banc`, `lampadaire`, `panneau`
 
 ## ⌨️ Raccourcis clavier
 
 | Touche | Action |
 |--------|--------|
-| `↑` | Avancer |
-| `←` | Tourner à gauche |
-| `→` | Tourner à droite |
+| `↑` `←` `→` | Déplacer / tourner |
 | `Espace` | Ramasser |
 | `A` | Lancer l'agent IA sur les clés |
-| `Échap` | Quitter |
+| `R` | Reset |
 
 ## 📦 Installation
 
 ### Prérequis
 - Python 3.9+
-- Un microphone
-- macOS / Linux / Windows
-- Autorisation micro pour le terminal (sur macOS : *Préférences Système → Sécurité → Microphone*)
+- Node.js 18+
+- Un microphone (autorisation navigateur)
 
-### Étapes
+### Backend
 
 ```bash
-# Cloner le repo
-git clone https://github.com/jrj37/command_voice_robot.git
-cd command_voice_robot
-
-# Créer un environnement virtuel
-python3 -m venv .venv
-source .venv/bin/activate   # sur Windows : .venv\Scripts\activate
-
-# Installer les dépendances
+cd backend
+python3 -m venv ../.venv
+source ../.venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> ⚠️ **PyAudio** peut nécessiter des dépendances système :
-> - macOS : `brew install portaudio`
-> - Linux : `sudo apt install portaudio19-dev python3-pyaudio`
+### Frontend
+
+```bash
+cd frontend
+npm install
+```
 
 ## 🚀 Lancement
 
+**Deux terminaux** :
+
 ```bash
-python main.py
+# Terminal 1 — backend (port 8000)
+cd backend
+../.venv/bin/python main.py
 ```
 
-1. Une fenêtre s'ouvre avec un écran d'activation du micro.
-2. Appuyez sur `Espace` pour activer.
-3. Parlez ou utilisez le clavier.
+```bash
+# Terminal 2 — frontend (port 5173)
+cd frontend
+npm run dev
+```
+
+Puis ouvre <http://localhost:5173>.
+
+Le frontend proxifie automatiquement le WebSocket `/ws` vers le backend via Vite.
+
+Variable optionnelle pour changer le modèle Whisper (par défaut `small`) :
+```bash
+WHISPER_MODEL=base python main.py
+```
 
 ## 🏗️ Architecture
 
+```
+┌─────────────────────────────┐         WebSocket           ┌──────────────────────────────┐
+│   FRONTEND (TypeScript)     │ ◄──────── /ws ───────────► │   BACKEND (Python)           │
+│                             │                              │                              │
+│   React + Vite + Pixi.js    │   → audio chunks (PCM 16k)   │   FastAPI + websockets       │
+│   Pixel art rendering       │   → actions / agent          │   Whisper (reconnaissance)   │
+│   Web Audio (AudioWorklet)  │   ← state JSON               │   RobotEnv (logique pure)    │
+│                             │   ← voice transcriptions     │   RobotAgent (BFS + vision)  │
+└─────────────────────────────┘                              └──────────────────────────────┘
+```
+
+### Backend (`backend/`)
+
 | Fichier | Rôle |
 |---------|------|
-| `main.py` | Boucle principale, reconnaissance vocale, gestion des événements |
-| `robot_env.py` | Environnement Gymnasium personnalisé + rendu Pygame |
-| `agent.py` | Agent IA autonome (pathfinding, collecte d'objets) |
-| `objects.py` | Définition des objets du monde (clés, gemmes, repères, etc.) |
-| `requirements.txt` | Dépendances Python |
+| `main.py` | Serveur FastAPI, route WebSocket `/ws`, boucle agent |
+| `game/env.py` | `RobotEnv` headless (logique de jeu) |
+| `game/agent.py` | Agent IA (BFS, vision limitée, hints) |
+| `game/objects.py` | Entités collectables + repères |
+| `voice/commands.py` | Parser texte → commande (fuzzy matching) |
+| `voice/recognizer.py` | Wrapper Whisper, transcription PCM |
+| `protocol.py` | Schémas Pydantic des messages WS |
 
-## 🧠 Comment ça marche
+### Frontend (`frontend/src/`)
 
-1. Un **thread d'écoute** capture l'audio en continu via `SpeechRecognition`.
-2. **Whisper** (modèle `small`, local) transcrit l'audio en texte français.
-3. Le texte est analysé : commande manuelle ? mission agent ? indice ?
-4. Les commandes sont poussées dans une **queue thread-safe** consommée par la boucle principale.
-5. Le **matching flou** (`difflib.SequenceMatcher`) rattrape les erreurs de reconnaissance.
-6. L'**agent IA** planifie un chemin vers la cible et exécute les actions une par une.
+| Fichier | Rôle |
+|---------|------|
+| `App.tsx` | Layout principal, WS, clavier |
+| `game/GameCanvas.tsx` | Composant Pixi.js |
+| `game/renderer.ts` | Rendu pixel art (tilemap, sprites, anims, particles) |
+| `ui/HUD.tsx` | Overlay micro + position + commande |
+| `ui/MicPrompt.tsx` | Écran d'activation initial |
+| `ui/SidePanels.tsx` | Inventaire + contrôles agent |
+| `net/ws.ts` | Client WebSocket typé (reconnect auto) |
+| `audio/recorder.ts` | Capture micro + VAD + envoi PCM 16 kHz |
+
+## 🧪 Tests
+
+```bash
+# Backend
+cd backend
+../.venv/bin/python -m pytest
+
+# Frontend (typecheck)
+cd frontend
+npx tsc --noEmit
+```
 
 ## 📜 Licence
 

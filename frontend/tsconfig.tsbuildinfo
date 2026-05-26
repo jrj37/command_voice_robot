@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/audio/recorder.ts","./src/game/gamecanvas.tsx","./src/game/colors.ts","./src/game/renderer.ts","./src/net/types.ts","./src/net/ws.ts","./src/ui/hud.tsx","./src/ui/micprompt.tsx","./src/ui/sidepanels.tsx"],"version":"5.9.3"}

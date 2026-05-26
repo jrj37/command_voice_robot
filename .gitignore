@@ -14,3 +14,11 @@ __pycache__/
 .idea/
 .vscode/
 *.log
+
+# Frontend
+node_modules/
+dist/
+.vite/
+
+# Whisper cache
+~/.cache/whisper/
