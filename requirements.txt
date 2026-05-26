@@ -1,0 +1,7 @@
+gymnasium
+pygame
+SpeechRecognition
+PyAudio
+numpy
+openai-whisper
+soundfile
