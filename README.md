@@ -98,4 +98,4 @@ python main.py
 
 ## 📜 Licence
 
-Projet personnel — libre d'utilisation.
+[MIT](LICENSE) © jrj37
