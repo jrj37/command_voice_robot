@@ -82,7 +82,7 @@ export function App() {
 
   return (
     <div className="app">
-      <div className="app-header">COMMAND VOICE ROBOT</div>
+      <div className="app-header">Command Voice Robot</div>
       <div className="game-shell">
         <LeftPanel state={state} />
         <div className="canvas-wrap">

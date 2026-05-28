@@ -16,30 +16,65 @@ interface Props {
 }
 
 export function LeftPanel({ state }: { state: StatePayload | null }) {
-  if (!state) return <div className="side-panel"><h2>INVENTAIRE</h2></div>;
-  const inv = state.inventory;
+  const inv = state?.inventory ?? {};
+  const total = state?.inventory_total ?? 0;
+  const max = state?.objects_total ?? 0;
+  const pct = max > 0 ? (total / max) * 100 : 0;
+
   return (
     <div className="side-panel">
-      <h2>📦 INVENTAIRE</h2>
-      <div className="inv-list">
-        {Object.entries(inv).length === 0 && (
-          <div style={{ gridColumn: "1/-1", color: "var(--text-dim)" }}>vide</div>
-        )}
-        {Object.entries(inv).map(([name, n]) => (
-          <div className="inv-cell" key={name}>
-            <span>{SHAPE_EMOJI[name] ?? "•"} {name}</span>
-            <strong>{n}</strong>
-          </div>
-        ))}
+      <div className="panel-title">
+        <span className="dot" />
+        Inventaire
       </div>
-      <div style={{ marginTop: 16, fontSize: 18 }}>
-        <div className="row"><span>Total</span><strong>{state.inventory_total} / {state.objects_total}</strong></div>
-        {state.nearby.length > 0 && (
-          <div className="row" style={{ color: "var(--warn)" }}>
-            <span>À portée</span><strong>{state.nearby[0]}</strong>
-          </div>
+
+      <div className="inv-grid">
+        {Object.keys(inv).length === 0 ? (
+          <div className="inv-empty">aucun objet collecté</div>
+        ) : (
+          Object.entries(inv).map(([name, n]) => (
+            <div className="inv-cell" key={name}>
+              <span className="label">
+                <span>{SHAPE_EMOJI[name] ?? "•"}</span>
+                <span>{name}</span>
+              </span>
+              <span className="count">{n}</span>
+            </div>
+          ))
         )}
       </div>
+
+      <div className="panel-section">
+        <div className="stat-row">
+          <span>Progression</span>
+          <strong>{total} / {max}</strong>
+        </div>
+        <div className="progress">
+          <div className="progress-bar" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+
+      {state && state.nearby.length > 0 && (
+        <div className="panel-section">
+          <div className="stat-row">
+            <span>À portée</span>
+            <strong style={{ color: "var(--amber)" }}>{state.nearby[0]}</strong>
+          </div>
+        </div>
+      )}
+
+      {state && (
+        <div className="panel-section">
+          <div className="stat-row">
+            <span>Position</span>
+            <strong>{state.robot.x},{state.robot.y}</strong>
+          </div>
+          <div className="stat-row">
+            <span>Cap</span>
+            <strong>{state.robot.dir_name}</strong>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -47,37 +82,49 @@ export function LeftPanel({ state }: { state: StatePayload | null }) {
 export function RightPanel({ state, onReset, onAgent, onCancelAgent }: Props) {
   return (
     <div className="side-panel">
-      <h2>🤖 AGENT IA</h2>
+      <div className="panel-title">
+        <span className="dot" style={{ background: "var(--pink)", boxShadow: "0 0 8px var(--pink)" }} />
+        Agent IA
+      </div>
+
       {state?.agent.active ? (
-        <>
-          <div style={{ fontSize: 18, marginBottom: 12 }}>
-            <div>🎯 <strong>{state.agent.target_type}</strong></div>
-            <div style={{ color: "var(--text-dim)" }}>{state.agent.status}</div>
-            <div style={{ marginTop: 8 }}>
-              Collectés : <strong>{state.agent.collected}</strong>
-              {state.agent.max_collect > 0 && ` / ${state.agent.max_collect}`}
-            </div>
+        <div className="agent-card">
+          <div className="target">🎯 {state.agent.target_type}</div>
+          <div className="status">{state.agent.status}</div>
+          <div className="progress-line">
+            collectés : {state.agent.collected}
+            {state.agent.max_collect > 0 && ` / ${state.agent.max_collect}`}
           </div>
-          <button className="btn btn-sm btn-pink" onClick={onCancelAgent}>STOP AGENT</button>
-        </>
+          <button className="btn btn-pink btn-sm" onClick={onCancelAgent} style={{ width: "100%" }}>
+            ⏹ Arrêter l'agent
+          </button>
+        </div>
       ) : (
-        <div className="btn-row">
-          <button className="btn btn-sm" onClick={() => onAgent("clé")}>Clés</button>
-          <button className="btn btn-sm" onClick={() => onAgent("gemme")}>Gemmes</button>
-          <button className="btn btn-sm" onClick={() => onAgent("étoile")}>Étoiles</button>
-          <button className="btn btn-sm" onClick={() => onAgent("all")}>Tout</button>
+        <div className="btn-grid">
+          <button className="btn btn-secondary btn-sm" onClick={() => onAgent("clé")}>🔑 Clés</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => onAgent("gemme")}>💎 Gemmes</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => onAgent("étoile")}>⭐ Étoiles</button>
+          <button className="btn btn-sm" onClick={() => onAgent("all")}>✨ Tout</button>
         </div>
       )}
 
-      <h2 style={{ marginTop: 24 }}>⚙️ CONTROLE</h2>
-      <div className="controls-help">
-        <div><kbd>↑</kbd> avancer</div>
-        <div><kbd>←</kbd> gauche · <kbd>→</kbd> droite</div>
-        <div><kbd>Espace</kbd> ramasser</div>
-        <div><kbd>R</kbd> reset</div>
+      <div className="panel-section">
+        <div className="panel-title" style={{ marginBottom: 12 }}>
+          <span className="dot" style={{ background: "var(--cyan)", boxShadow: "0 0 8px var(--cyan)" }} />
+          Contrôles
+        </div>
+        <div className="controls-help">
+          <div className="ctrl-row"><kbd>↑</kbd><span>avancer d'une case</span></div>
+          <div className="ctrl-row"><kbd>←</kbd><kbd>→</kbd><span>tourner</span></div>
+          <div className="ctrl-row"><kbd>Espace</kbd><span>ramasser</span></div>
+          <div className="ctrl-row"><kbd>R</kbd><span>reset</span></div>
+        </div>
       </div>
-      <div style={{ marginTop: 16 }}>
-        <button className="btn btn-sm" onClick={onReset}>🔄 RESET</button>
+
+      <div className="panel-section">
+        <button className="btn btn-secondary btn-sm" onClick={onReset} style={{ width: "100%" }}>
+          ↻ Reset la partie
+        </button>
       </div>
     </div>
   );

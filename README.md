@@ -3,16 +3,25 @@
 Jeu de contrôle vocal d'un robot sur une grille — architecture **client / serveur** :
 
 - 🐍 **Backend Python** (FastAPI + WebSocket) : logique du jeu + reconnaissance vocale Whisper
-- ⚛️ **Frontend TypeScript** (React + Vite + Pixi.js) : rendu pixel art rétro 16-bit dans le navigateur
+- ⚛️ **Frontend TypeScript** (React + Vite + Pixi.js) : interface web moderne avec rendu Canvas
 
 ## ✨ Fonctionnalités
 
 - 🎤 Reconnaissance vocale en français (Whisper local, sans clé API)
 - 🤖 Agent IA autonome : exploration avec champ de vision limité + pathfinding BFS
 - 💡 Indices vocaux pour guider l'agent ("près de la fontaine")
-- 🎨 Rendu pixel art animé avec halos, particules au ramassage, fog of war
+- 🎨 Design moderne : glassmorphisme, palette indigo/cyan/emerald, halos et particules
 - 🌐 Interface web responsive (HUD overlay, panneaux latéraux)
 - ⌨️ Contrôle clavier en alternative à la voix
+
+## 🎨 Design
+
+Interface inspirée des dashboards modernes (Linear, Vercel) :
+
+- Typographie : **Inter** (sans-serif) + **JetBrains Mono** (mono)
+- Palette : indigo `#8b5cf6`, cyan `#22d3ee`, emerald `#10b981` sur fond slate profond
+- Panneaux en glassmorphisme avec `backdrop-filter`
+- Animations douces, points pulsés, dégradés radiaux d'ambiance
 
 ## 🗣️ Commandes vocales
 
@@ -62,7 +71,15 @@ npm install
 
 ## 🚀 Lancement
 
-**Deux terminaux** :
+### Option 1 — script tout-en-un (recommandé)
+
+```bash
+./start.sh
+```
+
+Lance simultanément backend (port 8000) et frontend (port 5173) avec arrêt propre via Ctrl+C.
+
+### Option 2 — deux terminaux
 
 ```bash
 # Terminal 1 — backend (port 8000)
@@ -92,7 +109,7 @@ WHISPER_MODEL=base python main.py
 │   FRONTEND (TypeScript)     │ ◄──────── /ws ───────────► │   BACKEND (Python)           │
 │                             │                              │                              │
 │   React + Vite + Pixi.js    │   → audio chunks (PCM 16k)   │   FastAPI + websockets       │
-│   Pixel art rendering       │   → actions / agent          │   Whisper (reconnaissance)   │
+│   Rendu Canvas + design     │   → actions / agent          │   Whisper (reconnaissance)   │
 │   Web Audio (AudioWorklet)  │   ← state JSON               │   RobotEnv (logique pure)    │
 │                             │   ← voice transcriptions     │   RobotAgent (BFS + vision)  │
 └─────────────────────────────┘                              └──────────────────────────────┘
@@ -116,7 +133,9 @@ WHISPER_MODEL=base python main.py
 |---------|------|
 | `App.tsx` | Layout principal, WS, clavier |
 | `game/GameCanvas.tsx` | Composant Pixi.js |
-| `game/renderer.ts` | Rendu pixel art (tilemap, sprites, anims, particles) |
+| `game/renderer.ts` | Rendu Canvas (tilemap, sprites, anims, particles, fog) |
+| `game/colors.ts` | Palette indigo/cyan/emerald + highlights |
+| `styles.css` | Design system (glassmorphisme, tokens) |
 | `ui/HUD.tsx` | Overlay micro + position + commande |
 | `ui/MicPrompt.tsx` | Écran d'activation initial |
 | `ui/SidePanels.tsx` | Inventaire + contrôles agent |
